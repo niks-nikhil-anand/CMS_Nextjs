@@ -64,11 +64,6 @@ const SidebarAdmin = ({ isOpen = true }) => {
       icon: Eye
     },
     {
-      name: 'Distribute Donor Data',
-      path: '/admin/distributeData',
-      icon: Send
-    },
-    {
       name: 'Candidate Statistics',
       path: '/admin/candidateStatistics',
       icon: BarChart3

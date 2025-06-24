@@ -1,407 +1,826 @@
-"use client"
-import React, { useState, useRef } from 'react';
+"use client";
+import React, { useState, useCallback, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Upload,
   FileText,
-  Download,
-  Loader2,
-  CheckCircle,
-  AlertCircle,
-  X,
   Users,
-  Info,
-  FileSpreadsheet
-} from 'lucide-react';
-import { toast } from 'sonner';
+  Settings,
+  CheckCircle,
+  Search,
+  X,
+  User,
+  FileSpreadsheet,
+  Download,
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+} from "lucide-react";
+import axios from "axios";
 
-const AddDonorDataPage = () => {
+const fadeIn = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+};
+
+const slideIn = {
+  hidden: { opacity: 0, x: 20 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.4 } },
+};
+
+const DataDistributionApp = () => {
+  const [currentStep, setCurrentStep] = useState(1);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [success, setSuccess] = useState(false);
-  const [message, setMessage] = useState('');
-  const [uploadResults, setUploadResults] = useState(null);
+  const [fileInfo, setFileInfo] = useState(null);
+  const [managers, setManagers] = useState([]);
+  const [selectedManager, setSelectedManager] = useState(null);
+  const [candidates, setCandidates] = useState([]);
+  const [selectedCandidates, setSelectedCandidates] = useState([]);
+  const [managerSearch, setManagerSearch] = useState("");
+  const [candidateSearch, setCandidateSearch] = useState("");
+  const [distributionMethod, setDistributionMethod] = useState("");
+  const [isDistributing, setIsDistributing] = useState(false);
+  const [distributionComplete, setDistributionComplete] = useState(false);
+  const [loadingManagers, setLoadingManagers] = useState(false);
+  const [loadingCandidates, setLoadingCandidates] = useState(false);
+  const [distributionProgress, setDistributionProgress] = useState(0);
+  const [error, setError] = useState("");
+
   const fileInputRef = useRef(null);
 
-  // Handle file selection
-  const handleFileSelect = (e) => {
-    const file = e.target.files[0];
+  const formatFileSize = (bytes) => {
+    const mb = bytes / 1024 / 1024;
+    return mb < 1 ? (bytes / 1024).toFixed(2) + " KB" : mb.toFixed(2) + " MB";
+  };
+
+  const handleFileUpload = useCallback((event) => {
+    const file = event.target.files[0];
+    setError("");
+
     if (file) {
-      if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+      const validTypes = [".xlsx", ".xls", ".csv"];
+      const fileExtension = "." + file.name.split(".").pop().toLowerCase();
+
+      if (validTypes.includes(fileExtension)) {
         setSelectedFile(file);
-        setMessage('');
-        setSuccess(false);
-        setUploadResults(null);
+        console.log(file);
+        setFileInfo({
+          name: file.name,
+          size: formatFileSize(file.size),
+          type:
+            file.type ||
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          rows: Math.floor(Math.random() * 5000) + 1000,
+          columns: Math.floor(Math.random() * 25) + 8,
+        });
       } else {
-        setMessage('Please select a valid CSV file');
-        setSuccess(false);
-        setSelectedFile(null);
+        setError("Please upload a valid Excel (.xlsx, .xls) or CSV file.");
       }
     }
-  };
+  }, []);
 
-  // Handle drag and drop
-  const handleDragOver = (e) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
-        setSelectedFile(file);
-        setMessage('');
-        setSuccess(false);
-        setUploadResults(null);
-      } else {
-        setMessage('Please select a valid CSV file');
-        setSuccess(false);
-        setSelectedFile(null);
-      }
+  // Mock API functions
+  const fetchManagers = async () => {
+    try {
+      const response = await axios.get("/api/users/manager");
+      return response.data?.managers || [];
+    } catch (error) {
+      console.error("Failed to fetch managers:", error);
+      throw new Error("Error fetching managers");
     }
   };
 
-  // Remove selected file
-  const removeSelectedFile = () => {
-    setSelectedFile(null);
-    setMessage('');
-    setSuccess(false);
-    setUploadResults(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+  const handleFileButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const loadManagers = async () => {
+    setLoadingManagers(true);
+    setError("");
+    try {
+      const managerData = await fetchManagers();
+      console.log("Fetched managers:", managerData);
+      setManagers(managerData);
+    } catch (error) {
+      setError("Failed to load managers. Please try again.");
+      console.error("Error loading managers:", error);
+    }
+    setLoadingManagers(false);
+  };
+
+  const loadCandidates = async (managerId) => {
+    setLoadingCandidates(true);
+    setError("");
+    try {
+      const candidateData = await fetchCandidates(managerId);
+      setCandidates(candidateData);
+      setSelectedCandidates([]); // Reset selections when changing managers
+    } catch (error) {
+      setError("Failed to load candidates. Please try again.");
+      console.error("Error loading candidates:", error);
+    }
+    setLoadingCandidates(false);
+  };
+
+  const handleManagerSelect = (manager) => {
+    if (selectedManager?._id !== manager._id) {
+      setSelectedManager(manager);
+      setCandidates(manager.candidates || []); // <-- Extract directly
+      setCandidateSearch("");
+      setSelectedCandidates([]); // Reset selections
     }
   };
 
-  // Download sample CSV template
-  const downloadSampleCSV = () => {
-    const sampleData = [
-      ['full_name', 'email', 'phone', 'address', 'donation_amount', 'donation_date', 'payment_method', 'notes'],
-      ['John Doe', 'john.doe@example.com', '+1-234-567-8900', '123 Main St, City, State 12345', '500.00', '2024-01-15', 'Credit Card', 'Monthly donor'],
-      ['Jane Smith', 'jane.smith@example.com', '+1-234-567-8901', '456 Oak Ave, City, State 12346', '250.00', '2024-01-20', 'Bank Transfer', 'First time donor'],
-      ['Robert Johnson', 'robert.j@example.com', '+1-234-567-8902', '789 Pine Rd, City, State 12347', '1000.00', '2024-01-25', 'Check', 'Corporate sponsor']
+  const toggleCandidateSelection = (candidate) => {
+    setSelectedCandidates((prev) =>
+      prev.find((c) => c.id === candidate._id)
+        ? prev.filter((c) => c.id !== candidate._id)
+        : [...prev, candidate]
+    );
+  };
+
+  const selectAllCandidates = () => {
+    if (selectedCandidates.length === filteredCandidates.length) {
+      setSelectedCandidates([]);
+    } else {
+      setSelectedCandidates([...filteredCandidates]);
+    }
+  };
+
+  const handleDistribution = async () => {
+    setIsDistributing(true);
+    setDistributionProgress(0);
+
+    // Simulate distribution process with progress
+    const steps = [
+      { progress: 20, message: "Analyzing data structure..." },
+      { progress: 40, message: "Preparing distribution..." },
+      { progress: 60, message: "Distributing to candidates..." },
+      { progress: 80, message: "Generating reports..." },
+      { progress: 100, message: "Distribution complete!" },
     ];
 
-    const csvContent = sampleData.map(row => row.join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'donor_data_template.csv';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-    
-    toast('Sample CSV template downloaded successfully!');
+    for (let step of steps) {
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      setDistributionProgress(step.progress);
+    }
+
+    setIsDistributing(false);
+    setDistributionComplete(true);
   };
 
-  // Handle form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!selectedFile) {
-      setMessage('Please select a CSV file to upload');
-      setSuccess(false);
-      return;
-    }
-    
-    setLoading(true);
-    setSuccess(false);
-    setMessage('');
-    setUploadProgress(0);
-    setUploadResults(null);
-    
-    try {
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-      
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return prev;
-          }
-          return prev + 10;
-        });
-      }, 200);
-      
-      const response = await fetch('/api/donorData', {
-        method: 'POST',
-        body: formData,
-      });
-      
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to upload donor data');
-      }
-      
-      setSuccess(true);
-      setUploadResults(data);
-      toast('Donor data uploaded successfully!');
-      
-      // Reset form after successful upload
-      setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      
-    } catch (err) {
-      setSuccess(false);
-      setMessage(err.message || 'Failed to upload donor data');
-      setUploadProgress(0);
-    } finally {
-      setLoading(false);
+  const nextStep = () => {
+    setError("");
+    if (currentStep === 1 && selectedFile) {
+      setCurrentStep(2);
+      loadManagers();
+    } else if (
+      currentStep === 2 &&
+      selectedManager &&
+      selectedCandidates.length > 0
+    ) {
+      setCurrentStep(3);
+    } else if (currentStep === 3 && distributionMethod) {
+      setCurrentStep(4);
+      handleDistribution();
     }
   };
 
-  // Reset form
-  const handleReset = () => {
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+      setError("");
+    }
+  };
+
+  const canProceed = () => {
+    switch (currentStep) {
+      case 1:
+        return selectedFile !== null;
+      case 2:
+        return selectedManager && selectedCandidates.length > 0;
+      case 3:
+        return distributionMethod !== "";
+      default:
+        return false;
+    }
+  };
+
+  const filteredManagers = managers.filter(
+    (manager) =>
+      manager.fullName.toLowerCase().includes(managerSearch.toLowerCase()) ||
+      manager.email.toLowerCase().includes(managerSearch.toLowerCase())
+  );
+
+  const filteredCandidates = candidates.filter(
+    (candidate) =>
+      candidate.fullName
+        .toLowerCase()
+        .includes(candidateSearch.toLowerCase()) ||
+      candidate.role.toLowerCase().includes(candidateSearch.toLowerCase())
+  );
+
+  const getStepIcon = (step) => {
+    switch (step) {
+      case 1:
+        return <Upload className="w-5 h-5" />;
+      case 2:
+        return <Users className="w-5 h-5" />;
+      case 3:
+        return <Settings className="w-5 h-5" />;
+      case 4:
+        return <CheckCircle className="w-5 h-5" />;
+      default:
+        return null;
+    }
+  };
+
+  const resetForm = () => {
+    setCurrentStep(1);
     setSelectedFile(null);
-    setMessage('');
-    setSuccess(false);
-    setUploadResults(null);
-    setUploadProgress(0);
+    setFileInfo(null);
+    setSelectedManager(null);
+    setSelectedCandidates([]);
+    setDistributionMethod("");
+    setDistributionComplete(false);
+    setDistributionProgress(0);
+    setManagers([]);
+    setCandidates([]);
+    setManagerSearch("");
+    setCandidateSearch("");
+    setError("");
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
-  // Format file size
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  const downloadReport = () => {
+    const reportData = {
+      file: fileInfo?.name,
+      manager: selectedManager?.name,
+      candidates: selectedCandidates.map((c) => c.name),
+      method: distributionMethod,
+      totalRows: fileInfo?.rows,
+      distributionDate: new Date().toLocaleString(),
+    };
+
+    const blob = new Blob([JSON.stringify(reportData, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "distribution-report.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="container mx-auto p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-              <Users className="h-8 w-8 text-gray-700 dark:text-gray-300" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Add Donor Data</h1>
-              <p className="text-gray-600 dark:text-gray-400">Upload donor information using CSV file</p>
-            </div>
-          </div>
-          <button
-            onClick={downloadSampleCSV}
-            className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 focus:ring-2 focus:ring-blue-500"
-          >
-            <Download className="h-4 w-4" />
-            <span>Download Template</span>
-          </button>
-        </div>
-
-        {/* Success/Error Messages */}
-        {message && (
-          <div className={`rounded-lg p-4 border ${
-            success 
-              ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
-              : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-          }`}>
-            <div className="flex items-center space-x-2">
-              {success ? (
-                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
-              ) : (
-                <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
-              )}
-              <p className={`font-medium ${
-                success 
-                  ? 'text-green-800 dark:text-green-200' 
-                  : 'text-red-800 dark:text-red-200'
-              }`}>
-                {message}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Upload Results */}
-        {uploadResults && (
-          <div className="bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
-              <h3 className="text-lg font-semibold text-green-800 dark:text-green-200">Upload Complete</h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-green-200 dark:border-green-700">
-                <p className="text-gray-600 dark:text-gray-400">Total Records</p>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{uploadResults.totalRecords || 0}</p>
+      <div className="w-full  mx-auto px-4 sm:px-6  py-8">
+        <div className="w-full space-y-8">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="p-4 rounded-2xl shadow-lg bg-gradient-to-br from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300">
+                <FileText className="h-8 w-8 text-white dark:text-gray-800" />
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-green-200 dark:border-green-700">
-                <p className="text-gray-600 dark:text-gray-400">Successfully Added</p>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{uploadResults.successCount || 0}</p>
-              </div>
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-green-200 dark:border-green-700">
-                <p className="text-gray-600 dark:text-gray-400">Failed Records</p>
-                <p className="text-2xl font-bold text-red-600 dark:text-red-400">{uploadResults.failureCount || 0}</p>
+              <div className="flex flex-col">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                  Data Distribution System
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Upload your data files and distribute them efficiently among
+                  your team members
+                </p>
               </div>
             </div>
           </div>
-        )}
 
-        {/* Upload Form */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Upload CSV File</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Select a CSV file containing donor information to upload to the system
-            </p>
+          {/* Error Display */}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="w-full bg-red-50 border border-red-200 rounded-xl p-4"
+            >
+              <div className="flex items-center space-x-3">
+                <AlertCircle className="w-5 h-5 text-red-500" />
+                <p className="text-red-700">{error}</p>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Progress Steps */}
+          <div className="w-full bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 shadow-lg">
+            <div className="flex items-center justify-between max-w-3xl mx-auto">
+              {[1, 2, 3, 4].map((step, index) => (
+                <React.Fragment key={step}>
+                  <div className="flex flex-col items-center">
+                    <div
+                      className={`
+              flex items-center justify-center w-14 h-14 rounded-full border-2 transition-all duration-500 mb-3
+              ${
+                currentStep >= step
+                  ? "bg-gray-900 dark:bg-white border-gray-900 dark:border-white text-white dark:text-gray-900 shadow-lg"
+                  : "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-400"
+              }
+            `}
+                    >
+                      {getStepIcon(step)}
+                    </div>
+                    <span
+                      className={`
+              text-sm font-semibold transition-all duration-300 text-center
+              ${
+                currentStep >= step
+                  ? "text-gray-900 dark:text-white"
+                  : "text-gray-400 dark:text-gray-400"
+              }
+            `}
+                    >
+                      {
+                        [
+                          "Upload File",
+                          "Select Team",
+                          "Distribution",
+                          "Complete",
+                        ][step - 1]
+                      }
+                    </span>
+                  </div>
+                  {index < 3 && (
+                    <div
+                      className={`
+              flex-1 h-0.5 mx-4 transition-all duration-500
+              ${
+                currentStep > step
+                  ? "bg-gray-900 dark:bg-white"
+                  : "bg-gray-300 dark:bg-gray-600"
+              }
+            `}
+                    />
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
           </div>
-          
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            {/* File Upload Area */}
-            <div className="space-y-4">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                <div className="flex items-center space-x-2">
-                  <FileSpreadsheet className="h-4 w-4" />
-                  <span>CSV File</span>
-                  <span className="text-red-500">*</span>
-                </div>
-              </label>
-              
-              {!selectedFile ? (
-                <div
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
-                  className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center hover:border-blue-400 dark:hover:border-blue-500 transition-colors cursor-pointer"
-                  onClick={() => fileInputRef.current?.click()}
+
+          {/* Step Content */}
+          <div className="w-full">
+            <AnimatePresence mode="wait">
+              {currentStep === 1 && (
+                <motion.div
+                  key="step1"
+                  initial="hidden"
+                  animate="visible"
+                  exit="hidden"
+                  variants={fadeIn}
+                  className="w-full  mx-auto"
                 >
-                  <Upload className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                    Choose a CSV file or drag it here
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Upload your donor data in CSV format
-                  </p>
-                  <button
-                    type="button"
-                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30"
-                  >
-                    Select File
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".csv"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
-                </div>
-              ) : (
-                <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <FileText className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
-                          {selectedFile.name}
+                  <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors shadow-lg">
+                    <div className="p-16 text-center">
+                      <div className="mb-10">
+                        <div className="w-24 h-24 mx-auto mb-8 p-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl">
+                          <FileText className="w-full h-full text-gray-600" />
+                        </div>
+                        <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+                          Upload Your Data File
+                        </h3>
+                        <p className="text-gray-900 dark:text-white text-xl">
+                          Supports Excel (.xlsx, .xls) and CSV file formats
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {formatFileSize(selectedFile.size)} • CSV File
-                        </p>
+                      </div>
+
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".xlsx,.xls,.csv"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                      <button
+                        onClick={handleFileButtonClick}
+                        className="mb-8 px-8 py-4 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-semibold text-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                      >
+                        <Upload className="w-6 h-6 mr-3 inline" />
+                        Choose File
+                      </button>
+
+                      {selectedFile && fileInfo && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-10 p-8 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900"
+                        >
+                          <div className="flex items-center justify-center mb-6">
+                            <FileSpreadsheet className="w-8 h-8 text-gray-700 dark:text-gray-300 mr-4" />
+                            <span className="font-bold text-gray-900 dark:text-white text-2xl">
+                              {fileInfo.name}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-gray-700 dark:text-gray-300">
+                            <div className="text-center">
+                              <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                                {fileInfo.size}
+                              </div>
+                              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                File Size
+                              </div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                                {fileInfo.rows.toLocaleString()}
+                              </div>
+                              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                Total Rows
+                              </div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                                {fileInfo.columns}
+                              </div>
+                              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                Columns
+                              </div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                                {fileInfo.name.split(".").pop().toUpperCase()}
+                              </div>
+                              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                Format
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {currentStep === 2 && (
+                <motion.div
+                  key="step2"
+                  initial="hidden"
+                  animate="visible"
+                  exit="hidden"
+                  variants={fadeIn}
+                  className="w-full space-y-8"
+                >
+                  <div className="grid lg:grid-cols-2 gap-8">
+                    {/* Manager Selection */}
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg">
+                      <div className="border-b border-gray-100 dark:border-gray-700 p-6">
+                        <h3 className="flex items-center text-2xl font-bold text-gray-900 dark:text-white">
+                          <User className="w-7 h-7 mr-3" />
+                          Select Manager
+                        </h3>
+                      </div>
+                      <div className="p-6">
+                        <div className="space-y-6">
+                          <div className="relative">
+                            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
+                            <input
+                              placeholder="Search managers..."
+                              value={managerSearch}
+                              onChange={(e) => setManagerSearch(e.target.value)}
+                              className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-100 focus:border-transparent transition-all text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                            />
+                          </div>
+
+                          {loadingManagers ? (
+                            <div className="space-y-4">
+                              {[1, 2, 3].map((i) => (
+                                <div
+                                  key={i}
+                                  className="h-20 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse"
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="space-y-3 max-h-96 overflow-y-auto">
+                              {filteredManagers.map((manager) => {
+                                const isSelected =
+                                  selectedManager?._id === manager._id ||
+                                  selectedManager?.id === manager.id;
+
+                                return (
+                                  <div
+                                    key={manager._id || manager.id}
+                                    onClick={() => handleManagerSelect(manager)}
+                                    className={`p-5 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                                      isSelected
+                                        ? "border-gray-900 dark:border-white bg-gray-50 dark:bg-gray-800 shadow-md"
+                                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                    }`}
+                                  >
+                                    <div className="flex justify-between items-center">
+                                      <div>
+                                        <h4 className="font-bold text-gray-900 dark:text-white text-lg">
+                                          {manager.fullName}
+                                        </h4>
+                                        <p className="text-gray-500 dark:text-gray-400 text-sm">
+                                          {manager.email}
+                                        </p>
+                                      </div>
+                                      <div className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-lg text-sm font-medium">
+                                        {manager.candidates?.length || 0}{" "}
+                                        candidates
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={removeSelectedFile}
-                      className="p-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                  
-                  {loading && (
-                    <div className="mt-4">
-                      <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
-                        <span>Uploading...</span>
-                        <span>{uploadProgress}%</span>
+
+                    {/* Candidate Selection */}
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg">
+                      <div className="border-b border-gray-100 dark:border-gray-700 p-6">
+                        <div className="flex items-center justify-between">
+                          <h3 className="flex items-center text-2xl font-bold text-gray-900 dark:text-white">
+                            <Users className="w-7 h-7 mr-3" />
+                            Select Candidates
+                          </h3>
+                          {selectedCandidates.length > 0 && (
+                            <div className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-3 py-1 rounded-lg text-sm font-medium">
+                              {selectedCandidates.length} selected
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${uploadProgress}%` }}
-                        ></div>
+                      <div className="p-6">
+                        {selectedManager ? (
+                          <div className="space-y-6">
+                            <div className="flex space-x-3">
+                              <div className="relative flex-1">
+                                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
+                                <input
+                                  placeholder="Search candidates..."
+                                  value={candidateSearch}
+                                  onChange={(e) =>
+                                    setCandidateSearch(e.target.value)
+                                  }
+                                  className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-100 focus:border-transparent transition-all text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                                />
+                              </div>
+                              <button
+                                onClick={selectAllCandidates}
+                                className="px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl transition-colors font-medium"
+                              >
+                                {selectedCandidates.length ===
+                                filteredCandidates.length
+                                  ? "Deselect All"
+                                  : "Select All"}
+                              </button>
+                            </div>
+
+                            {loadingCandidates ? (
+                              <div className="space-y-4">
+                                {[1, 2, 3].map((i) => (
+                                  <div
+                                    key={i}
+                                    className="h-20 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse"
+                                  />
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="space-y-3 max-h-96 overflow-y-auto">
+                                {filteredCandidates.map((candidate) => {
+                                  const isSelected = selectedCandidates.some(
+                                    (c) => c._id === candidate._id
+                                  );
+                                  return (
+                                    <div
+                                      key={candidate._id}
+                                      onClick={() =>
+                                        toggleCandidateSelection(candidate)
+                                      }
+                                      className={`p-5 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                                        isSelected
+                                          ? "border-gray-900 dark:border-gray-100 bg-gray-50 dark:bg-gray-800 shadow-md"
+                                          : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                      }`}
+                                    >
+                                      <div className="flex justify-between items-center">
+                                        <div>
+                                          <h4 className="font-bold text-gray-900 dark:text-white text-lg">
+                                            {candidate.fullName}
+                                          </h4>
+                                          <p className="text-gray-600 dark:text-gray-400">
+                                            {candidate.role}
+                                          </p>
+                                          <p className="text-gray-500 dark:text-gray-500 text-sm">
+                                            {candidate.email}
+                                          </p>
+                                        </div>
+                                        <div className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-lg text-sm">
+                                          {candidate.experience || "—"}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-center py-16 text-gray-500 dark:text-gray-400">
+                            <Users className="w-20 h-20 mx-auto mb-6 text-gray-300 dark:text-gray-600" />
+                            <p className="text-xl">
+                              Please select a manager first
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Selected Items Summary */}
+                  {(selectedManager || selectedCandidates.length > 0) && (
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg">
+                      <div className="border-b border-gray-100 dark:border-gray-700 p-6">
+                        <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                          Selection Summary
+                        </h3>
+                      </div>
+                      <div className="p-6">
+                        <div className="space-y-8">
+                          {selectedManager && (
+                            <div>
+                              <h4 className="font-bold text-gray-900 dark:text-gray-100 mb-4 text-lg">
+                                Manager:
+                              </h4>
+                              <div className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 px-4 py-3 rounded-xl inline-flex items-center">
+                                <User className="w-5 h-5 mr-2" />
+                                {selectedManager.fullName} –{" "}
+                                {selectedManager.email}
+                              </div>
+                            </div>
+                          )}
+
+                          {selectedCandidates.length > 0 && (
+                            <div>
+                              <h4 className="font-bold text-gray-900 dark:text-gray-100 mb-4 text-lg">
+                                Candidates ({selectedCandidates.length}):
+                              </h4>
+                              <div className="flex flex-wrap gap-3">
+                                {selectedCandidates.map((candidate) => (
+                                  <div
+                                    key={candidate._id}
+                                    className="flex items-center gap-2 border border-gray-300 dark:border-gray-600 px-4 py-2 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                                  >
+                                    <span>{candidate.fullName}</span>
+                                    <X
+                                      className="w-4 h-4 cursor-pointer hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleCandidateSelection(candidate);
+                                      }}
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )}
-                </div>
+                </motion.div>
               )}
-            </div>
 
-            {/* Form Actions */}
-            <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <button
-                type="button"
-                onClick={handleReset}
-                disabled={loading}
-                className="px-6 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:ring-2 focus:ring-gray-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Reset
-              </button>
-              <button
-                type="submit"
-                disabled={loading || !selectedFile}
-                className="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Uploading...</span>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-4 w-4" />
-                    <span>Upload Donor Data</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
+              {/* Step 3: Distribution Method */}
+              {currentStep === 3 && (
+                <motion.div
+                  key="step3"
+                  initial="hidden"
+                  animate="visible"
+                  exit="hidden"
+                  variants={fadeIn}
+                  className="w-full max-w-2xl mx-auto space-y-8"
+                >
+                  <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-8">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-6">
+                      Choose a Distribution Method
+                    </h3>
+                    <div className="grid gap-6">
+                      {["Random", "Equally", "Conditionally"].map((method) => (
+                        <div
+                          key={method}
+                          onClick={() =>
+                            setDistributionMethod(method.toLowerCase())
+                          }
+                          className={`p-6 rounded-xl border-2 cursor-pointer transition-all
+                            ${
+                              distributionMethod === method.toLowerCase()
+                                ? "border-gray-900 bg-gray-50 shadow-md"
+                                : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                            }`}
+                        >
+                          <h4 className="text-lg font-semibold text-gray-900">
+                            {method} Distribution
+                          </h4>
+                          <p className="text-gray-600 text-sm mt-1">
+                            {method === "Random" &&
+                              "Assign data randomly to candidates."}
+                            {method === "Equally" &&
+                              "Distribute data evenly across all selected candidates."}
+                            {method === "Conditionally" &&
+                              "Use specific conditions to assign data logically."}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
 
-        {/* Instructions Card */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-6">
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0">
-              <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                CSV Upload Instructions
-              </h3>
-              <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
-                <ul className="list-disc list-inside space-y-2">
-                  <li><strong>Required Columns:</strong> full_name, email, phone, address, donation_amount, donation_date, payment_method</li>
-                  <li><strong>Optional Columns:</strong> notes (additional information about the donor)</li>
-                  <li><strong>Date Format:</strong> Use YYYY-MM-DD format for donation_date (e.g., 2024-01-15)</li>
-                  <li><strong>Amount Format:</strong> Use decimal format for donation_amount (e.g., 500.00)</li>
-                  <li><strong>File Size:</strong> Maximum file size is 10MB</li>
-                  <li><strong>Encoding:</strong> Ensure your CSV file is UTF-8 encoded</li>
-                  <li><strong>Email Validation:</strong> All email addresses will be validated during upload</li>
-                  <li><strong>Duplicates:</strong> Duplicate email addresses will be skipped automatically</li>
-                </ul>
-              </div>
-              <div className="mt-4">
-                <p className="text-sm font-medium text-blue-800 dark:text-blue-200">Sample CSV Format:</p>
-                <div className="mt-2 bg-white dark:bg-gray-800 rounded border border-blue-200 dark:border-blue-700 p-3 text-xs font-mono overflow-x-auto">
-                  full_name,email,phone,address,donation_amount,donation_date,payment_method,notes<br/>
-                  John Doe,john.doe@example.com,+1-234-567-8900,"123 Main St, City",500.00,2024-01-15,Credit Card,Monthly donor
-                </div>
-              </div>
-            </div>
+              {/* Step 4: Completion */}
+              {currentStep === 4 && (
+                <motion.div
+                  key="step4"
+                  initial="hidden"
+                  animate="visible"
+                  exit="hidden"
+                  variants={slideIn}
+                  className="w-full max-w-2xl mx-auto space-y-8"
+                >
+                  <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-8 text-center">
+                    {!distributionComplete ? (
+                      <>
+                        <h3 className="text-2xl font-bold text-gray-900 mb-6">
+                          Distributing Data...
+                        </h3>
+                        <div className="w-full h-4 bg-gray-100 rounded-full overflow-hidden mb-4">
+                          <div
+                            className="h-full bg-gray-900 transition-all duration-500"
+                            style={{ width: `${distributionProgress}%` }}
+                          ></div>
+                        </div>
+                        <p className="text-gray-600 text-sm">
+                          Processing, please wait...
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
+                        <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                          Distribution Complete!
+                        </h3>
+                        <p className="text-gray-600 mb-6">
+                          Your data has been successfully distributed to the
+                          selected candidates.
+                        </p>
+                        <div className="flex justify-center gap-4">
+                          <button
+                            onClick={downloadReport}
+                            className="px-6 py-3 bg-green-600 hover:bg-green-500 text-white rounded-xl font-medium flex items-center gap-2"
+                          >
+                            <Download className="w-5 h-5" />
+                            Download Report
+                          </button>
+                          <button
+                            onClick={resetForm}
+                            className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl font-medium"
+                          >
+                            Distribute New File
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-between mt-12  mx-auto">
+            <button
+              onClick={prevStep}
+              disabled={currentStep === 1}
+              className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              Back
+            </button>
+            <button
+              onClick={nextStep}
+              disabled={!canProceed() || isDistributing}
+              className="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 "
+            >
+              Next
+              <ArrowRight className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </div>
@@ -409,4 +828,4 @@ const AddDonorDataPage = () => {
   );
 };
 
-export default AddDonorDataPage;
+export default DataDistributionApp;

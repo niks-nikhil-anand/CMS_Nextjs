@@ -8,9 +8,13 @@ export const GET = async () => {
     await connectDB();
     console.log("Database connected.");
 
-    const managers = await userModels
-      .find({ role: "Manager", status: "Active" }) 
-      .select("-password"); 
+   const managers = await userModels
+      .find({ role: "Manager", status: "Active" })
+      .populate({
+        path: "candidates",
+        select: "-password -__v", 
+      })
+      .select("-password");
 
     return NextResponse.json(
       { message: "Candidates fetched successfully", managers },
