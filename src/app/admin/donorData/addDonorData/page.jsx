@@ -108,20 +108,6 @@ const DataDistributionApp = () => {
     setLoadingManagers(false);
   };
 
-  const loadCandidates = async (managerId) => {
-    setLoadingCandidates(true);
-    setError("");
-    try {
-      const candidateData = await fetchCandidates(managerId);
-      setCandidates(candidateData);
-      setSelectedCandidates([]); // Reset selections when changing managers
-    } catch (error) {
-      setError("Failed to load candidates. Please try again.");
-      console.error("Error loading candidates:", error);
-    }
-    setLoadingCandidates(false);
-  };
-
   const handleManagerSelect = (manager) => {
     if (selectedManager?._id !== manager._id) {
       setSelectedManager(manager);
@@ -133,8 +119,8 @@ const DataDistributionApp = () => {
 
   const toggleCandidateSelection = (candidate) => {
     setSelectedCandidates((prev) =>
-      prev.find((c) => c.id === candidate._id)
-        ? prev.filter((c) => c.id !== candidate._id)
+      prev.find((c) => c._id === candidate._id)
+        ? prev.filter((c) => c._id !== candidate._id)
         : [...prev, candidate]
     );
   };
@@ -255,22 +241,30 @@ const DataDistributionApp = () => {
   };
 
   const downloadReport = () => {
+    if (!fileInfo || !selectedManager || selectedCandidates.length === 0)
+      return;
+
     const reportData = {
-      file: fileInfo?.name,
-      manager: selectedManager?.name,
-      candidates: selectedCandidates.map((c) => c.name),
+      fileName: fileInfo?.name,
+      manager: selectedManager?.fullName || selectedManager?.name,
+      candidates: selectedCandidates.map((c) => c.fullName || c.name),
       method: distributionMethod,
       totalRows: fileInfo?.rows,
       distributionDate: new Date().toLocaleString(),
     };
 
+    const fileName = `distribution-report-${new Date()
+      .toISOString()
+      .replace(/[:.]/g, "-")}.json`;
+
     const blob = new Blob([JSON.stringify(reportData, null, 2)], {
       type: "application/json",
     });
+
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "distribution-report.json";
+    a.download = fileName;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -708,34 +702,34 @@ const DataDistributionApp = () => {
                   variants={fadeIn}
                   className="w-full max-w-2xl mx-auto space-y-8"
                 >
-                  <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-8">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-6">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg p-8">
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                       Choose a Distribution Method
                     </h3>
                     <div className="grid gap-6">
-                      {["Random", "Equally", "Conditionally"].map((method) => (
+                      {["Random", "Equally"].map((method) => (
                         <div
                           key={method}
                           onClick={() =>
                             setDistributionMethod(method.toLowerCase())
                           }
-                          className={`p-6 rounded-xl border-2 cursor-pointer transition-all
-                            ${
-                              distributionMethod === method.toLowerCase()
-                                ? "border-gray-900 bg-gray-50 shadow-md"
-                                : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                            }`}
+                          className={`
+              p-6 rounded-xl border-2 cursor-pointer transition-all
+              ${
+                distributionMethod === method.toLowerCase()
+                  ? "border-gray-900 dark:border-white bg-gray-50 dark:bg-gray-700 shadow-md"
+                  : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700"
+              }
+            `}
                         >
-                          <h4 className="text-lg font-semibold text-gray-900">
+                          <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
                             {method} Distribution
                           </h4>
-                          <p className="text-gray-600 text-sm mt-1">
+                          <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
                             {method === "Random" &&
-                              "Assign data randomly to candidates."}
+                              "Each candidate is assigned a random portion of the data. Ideal for unbiased distribution when no specific criteria are needed."}
                             {method === "Equally" &&
-                              "Distribute data evenly across all selected candidates."}
-                            {method === "Conditionally" &&
-                              "Use specific conditions to assign data logically."}
+                              "Data is divided evenly among all selected candidates. Perfect for ensuring balanced workloads."}
                           </p>
                         </div>
                       ))}
@@ -754,45 +748,39 @@ const DataDistributionApp = () => {
                   variants={slideIn}
                   className="w-full max-w-2xl mx-auto space-y-8"
                 >
-                  <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-8 text-center">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg p-8 text-center">
                     {!distributionComplete ? (
                       <>
-                        <h3 className="text-2xl font-bold text-gray-900 mb-6">
+                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                           Distributing Data...
                         </h3>
-                        <div className="w-full h-4 bg-gray-100 rounded-full overflow-hidden mb-4">
+                        <div className="w-full h-4 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden mb-4">
                           <div
-                            className="h-full bg-gray-900 transition-all duration-500"
+                            className="h-full bg-gray-900 dark:bg-white transition-all duration-500"
                             style={{ width: `${distributionProgress}%` }}
                           ></div>
                         </div>
-                        <p className="text-gray-600 text-sm">
+                        <p className="text-gray-600 dark:text-gray-400 text-sm">
                           Processing, please wait...
                         </p>
                       </>
                     ) : (
                       <>
                         <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
-                        <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
                           Distribution Complete!
                         </h3>
-                        <p className="text-gray-600 mb-6">
+                        <p className="text-gray-600 dark:text-gray-400 mb-6">
                           Your data has been successfully distributed to the
                           selected candidates.
                         </p>
-                        <div className="flex justify-center gap-4">
+                        <div className="flex justify-center gap-4 flex-wrap">
                           <button
                             onClick={downloadReport}
-                            className="px-6 py-3 bg-green-600 hover:bg-green-500 text-white rounded-xl font-medium flex items-center gap-2"
+                            className="px-6 py-3 bg-green-600 hover:bg-green-500 text-white rounded-xl font-medium flex items-center gap-2 transition-colors"
                           >
                             <Download className="w-5 h-5" />
                             Download Report
-                          </button>
-                          <button
-                            onClick={resetForm}
-                            className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl font-medium"
-                          >
-                            Distribute New File
                           </button>
                         </div>
                       </>
