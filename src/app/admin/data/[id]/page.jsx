@@ -1,5 +1,5 @@
-"use client"
-import React, { useState, useEffect } from 'react';
+"use client";
+import React, { useState, useEffect } from "react";
 import {
   ArrowLeft,
   Edit,
@@ -19,33 +19,50 @@ import {
   AlertTriangle,
   TrendingUp,
   History,
-  CheckCircle
-} from 'lucide-react';
+  CheckCircle,
+} from "lucide-react";
 
 const DonorDetailsPage = () => {
   const [donorId, setDonorId] = useState(null);
   const [donor, setDonor] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  
+
   // Form states
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    address: '',
-    donationAmount: '',
-    donationDate: '',
-    paymentMethod: '',
-    notes: '',
-    isActive: true
+    fullName: "",
+    email: "",
+    phone: "",
+    address: "",
+    donation_amount: "",
+    donation_date: "",
+    payment_method: "",
+    notes: "",
   });
-  
+
   // Delete confirmation
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  // Mock data for demonstration
+  const mockDonor = {
+    _id: "685c47d798975cd972b461b5",
+    fullName: "John Doe",
+    email: "john.doe@example.com",
+    phone: "+91 9876543210",
+    createdAt: "2024-01-15T10:30:00Z",
+    updatedAt: "2024-01-20T14:45:00Z",
+    additionalFields: {
+      address: "123 Main Street, Mumbai, Maharashtra 400001",
+      donation_amount: 5000,
+      donation_date: "2024-01-15",
+      payment_method: "UPI",
+      notes:
+        "Regular donor, prefers digital payments. Very supportive of our cause.",
+    },
+  };
 
   // Fetch donor details
   const fetchDonor = async () => {
@@ -53,31 +70,43 @@ const DonorDetailsPage = () => {
 
     try {
       setLoading(true);
-      const response = await fetch(`/api/donorData/${donorId}`);
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch donor details');
-      }
+      // Simulate API call - replace with actual API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      const data = await response.json();
-      console.log(data);
+      // For demo purposes, using mock data
+      const donorData = mockDonor;
+      setDonor(donorData);
 
-      setDonor(data.data);
+      // Map the form data correctly based on the API response structure
       setFormData({
-        fullName: data.data.fullName,
-        email: data.data.email,
-        phone: data.data.phone,
-        address: data.data.address,
-        donationAmount: data.data.donationAmount.toString(),
-        donationDate: new Date(data.data.donationDate).toISOString().split('T')[0],
-        paymentMethod: data.data.paymentMethod,
-        notes: data.data.notes || '',
-        isActive: data.data.isActive
+        fullName: donorData.fullName || "",
+        email: donorData.email || "",
+        phone: donorData.phone || "",
+        address:
+          donorData.additionalFields?.address ||
+          donorData.allFields?.address ||
+          "",
+        donation_amount: (
+          donorData.additionalFields?.donation_amount ||
+          donorData.allFields?.donation_amount ||
+          ""
+        ).toString(),
+        donation_date:
+          donorData.additionalFields?.donation_date ||
+          donorData.allFields?.donation_date ||
+          "",
+        payment_method:
+          donorData.additionalFields?.payment_method ||
+          donorData.allFields?.payment_method ||
+          "",
+        notes:
+          donorData.additionalFields?.notes || donorData.allFields?.notes || "",
       });
-      setError('');
+      setError("");
     } catch (err) {
-      setError('Failed to fetch donor details');
-      console.error('Error fetching donor:', err);
+      setError("Failed to fetch donor details");
+      console.error("Error fetching donor:", err);
     } finally {
       setLoading(false);
     }
@@ -91,33 +120,30 @@ const DonorDetailsPage = () => {
         fullName: formData.fullName,
         email: formData.email,
         phone: formData.phone,
-        address: formData.address,
-        donationAmount: parseFloat(formData.donationAmount),
-        donationDate: new Date(formData.donationDate),
-        paymentMethod: formData.paymentMethod,
-        notes: formData.notes,
-        isActive: formData.isActive
-      };
-      
-      const response = await fetch(`/api/donorData/${donorId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
+        additionalFields: {
+          address: formData.address,
+          donation_amount: parseFloat(formData.donation_amount) || 0,
+          donation_date: formData.donation_date,
+          payment_method: formData.payment_method,
+          notes: formData.notes,
         },
-        body: JSON.stringify(updateData),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to update donor');
-      }
-      
-      const data = await response.json();
-      setDonor(data.data);
+      };
+
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Update local state
+      setDonor((prev) => ({
+        ...prev,
+        ...updateData,
+        updatedAt: new Date().toISOString(),
+      }));
+
       setEditing(false);
-      setError('');
+      setError("");
     } catch (err) {
-      setError('Failed to update donor');
-      console.error('Error updating donor:', err);
+      setError("Failed to update donor");
+      console.error("Error updating donor:", err);
     } finally {
       setSaving(false);
     }
@@ -127,124 +153,91 @@ const DonorDetailsPage = () => {
   const handleDelete = async () => {
     try {
       setDeleting(true);
-      const response = await fetch(`/api/donorData/${donorId}`, {
-        method: 'DELETE',
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to delete donor');
-      }
-      
-      // Redirect to donors list
-      window.location.href = '/admin/donors';
+
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Simulate redirect to donors list
+      alert("Donor deleted successfully! Redirecting to donors list...");
+      setShowDeleteDialog(false);
     } catch (err) {
-      setError('Failed to delete donor');
-      console.error('Error deleting donor:', err);
+      setError("Failed to delete donor");
+      console.error("Error deleting donor:", err);
+    } finally {
       setDeleting(false);
     }
   };
 
   // Handle form input changes
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
-  };
-
-  // Get status badge classes
-  const getStatusBadgeClasses = (isActive) => {
-    return isActive 
-      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-      : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
   };
 
   // Get payment method badge classes
   const getPaymentMethodBadgeClasses = (method) => {
     switch (method) {
-      case 'Credit Card': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-      case 'Debit Card': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300';
-      case 'Bank Transfer': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'UPI': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
-      case 'PayPal': return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300';
-      case 'Cash': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      case 'Check': return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+      case "Credit Card":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
+      case "Debit Card":
+        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
+      case "Bank Transfer":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+      case "UPI":
+        return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300";
+      case "PayPal":
+        return "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300";
+      case "Cash":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
+      case "Check":
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
     }
   };
 
   // Format currency
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR'
-    }).format(amount);
+    const numAmount = parseFloat(amount) || 0;
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+    }).format(numAmount);
   };
 
   // Format date
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   // Handle back navigation
   const handleBack = () => {
-    window.location.href = '/admin/donors';
+    alert("Navigating back to donors list...");
+  };
+
+  // Helper function to get nested field value
+  const getFieldValue = (field) => {
+    if (!donor) return "";
+    return donor.additionalFields?.[field] || donor.allFields?.[field] || "";
   };
 
   useEffect(() => {
     // Extract donorId from URL - for demo purposes, we'll use a mock ID
-    const urlPath = window.location.pathname;
-    const id = urlPath.split("/")[3] || "demo-donor-123";
+    const id = "685c47d798975cd972b461b5";
     setDonorId(id);
   }, []);
 
   useEffect(() => {
     if (donorId) {
-      // For demo purposes, we'll use mock data instead of API call
-      setTimeout(() => {
-        const mockDonor = {
-          _id: donorId,
-          fullName: "Rajesh Kumar",
-          email: "rajesh.kumar@email.com",
-          phone: "+91-9876543210",
-          address: "123 MG Road, Sector 14, Gurugram, Haryana 122001",
-          donationAmount: 5000,
-          donationDate: "2024-01-15T10:30:00Z",
-          paymentMethod: "UPI",
-          notes: "Regular monthly donor, very supportive of our cause.",
-          isActive: true,
-          totalDonated: 25000,
-          donationHistory: [
-            { amount: 5000, date: "2024-01-15T10:30:00Z", paymentMethod: "UPI", notes: "Monthly donation" },
-            { amount: 7500, date: "2023-12-15T10:30:00Z", paymentMethod: "Credit Card", notes: "Year-end donation" },
-            { amount: 5000, date: "2023-11-15T10:30:00Z", paymentMethod: "UPI", notes: "Monthly donation" },
-            { amount: 7500, date: "2023-10-15T10:30:00Z", paymentMethod: "Bank Transfer", notes: "Festival donation" }
-          ],
-          lastDonated: "2024-01-15T10:30:00Z",
-          createdAt: "2023-06-01T08:00:00Z",
-          updatedAt: "2024-01-15T10:30:00Z"
-        };
-
-        setDonor(mockDonor);
-        setFormData({
-          fullName: mockDonor.fullName,
-          email: mockDonor.email,
-          phone: mockDonor.phone,
-          address: mockDonor.address,
-          donationAmount: mockDonor.donationAmount.toString(),
-          donationDate: new Date(mockDonor.donationDate).toISOString().split('T')[0],
-          paymentMethod: mockDonor.paymentMethod,
-          notes: mockDonor.notes || '',
-          isActive: mockDonor.isActive
-        });
-        setLoading(false);
-      }, 1000);
+      fetchDonor();
     }
   }, [donorId]);
 
@@ -253,7 +246,9 @@ const DonorDetailsPage = () => {
       <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-900">
         <div className="flex items-center space-x-2">
           <Loader2 className="h-8 w-8 animate-spin text-gray-600 dark:text-gray-400" />
-          <span className="text-lg text-gray-700 dark:text-gray-300">Loading donor details...</span>
+          <span className="text-lg text-gray-700 dark:text-gray-300">
+            Loading donor details...
+          </span>
         </div>
       </div>
     );
@@ -263,7 +258,9 @@ const DonorDetailsPage = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Donor not found</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            Donor not found
+          </h2>
           <button
             onClick={handleBack}
             className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
@@ -274,6 +271,12 @@ const DonorDetailsPage = () => {
       </div>
     );
   }
+
+  const donationAmount = parseFloat(getFieldValue("donation_amount")) || 0;
+  const donationDate = getFieldValue("donation_date");
+  const paymentMethod = getFieldValue("payment_method");
+  const address = getFieldValue("address");
+  const notes = getFieldValue("notes");
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -293,15 +296,17 @@ const DonorDetailsPage = () => {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                  {editing ? 'Edit Donor' : 'Donor Details'}
+                  {editing ? "Edit Donor" : "Donor Details"}
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400">
-                  {editing ? 'Modify donor information' : 'View and manage donor information'}
+                  {editing
+                    ? "Modify donor information"
+                    : "View and manage donor information"}
                 </p>
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-3">
             {!editing ? (
               <>
@@ -325,16 +330,16 @@ const DonorDetailsPage = () => {
                 <button
                   onClick={() => {
                     setEditing(false);
+                    // Reset form data to original values
                     setFormData({
-                      fullName: donor.fullName,
-                      email: donor.email,
-                      phone: donor.phone,
-                      address: donor.address,
-                      donationAmount: donor.donationAmount.toString(),
-                      donationDate: new Date(donor.donationDate).toISOString().split('T')[0],
-                      paymentMethod: donor.paymentMethod,
-                      notes: donor.notes || '',
-                      isActive: donor.isActive
+                      fullName: donor.fullName || "",
+                      email: donor.email || "",
+                      phone: donor.phone || "",
+                      address: address,
+                      donation_amount: donationAmount.toString(),
+                      donation_date: donationDate,
+                      payment_method: paymentMethod,
+                      notes: notes,
                     });
                   }}
                   className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
@@ -352,7 +357,7 @@ const DonorDetailsPage = () => {
                   ) : (
                     <Save className="h-4 w-4" />
                   )}
-                  <span>{saving ? 'Saving...' : 'Save Changes'}</span>
+                  <span>{saving ? "Saving..." : "Save Changes"}</span>
                 </button>
               </>
             )}
@@ -371,9 +376,11 @@ const DonorDetailsPage = () => {
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Donated</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Donation Amount
+                </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {formatCurrency(donor.totalDonated)}
+                  {formatCurrency(donationAmount)}
                 </p>
               </div>
               <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
@@ -385,9 +392,11 @@ const DonorDetailsPage = () => {
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Donations</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Registration Date
+                </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {donor.donationHistory?.length || 1}
+                  {formatDate(donor.createdAt)}
                 </p>
               </div>
               <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
@@ -399,9 +408,11 @@ const DonorDetailsPage = () => {
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Last Donation</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Last Updated
+                </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {new Date(donor.lastDonated).toLocaleDateString()}
+                  {formatDate(donor.updatedAt)}
                 </p>
               </div>
               <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
@@ -418,10 +429,12 @@ const DonorDetailsPage = () => {
               Donor Information
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {editing ? 'Edit the donor details below' : 'Basic information about the donor'}
+              {editing
+                ? "Edit the donor details below"
+                : "Basic information about the donor"}
             </p>
           </div>
-          
+
           <div className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Full Name */}
@@ -433,13 +446,17 @@ const DonorDetailsPage = () => {
                   <input
                     type="text"
                     value={formData.fullName}
-                    onChange={(e) => handleInputChange('fullName', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("fullName", e.target.value)
+                    }
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 ) : (
                   <div className="flex items-center space-x-2 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
                     <User className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                    <span className="text-gray-900 dark:text-white">{donor.fullName}</span>
+                    <span className="text-gray-900 dark:text-white">
+                      {donor.fullName}
+                    </span>
                   </div>
                 )}
               </div>
@@ -453,13 +470,15 @@ const DonorDetailsPage = () => {
                   <input
                     type="email"
                     value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 ) : (
                   <div className="flex items-center space-x-2 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
                     <Mail className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                    <span className="text-gray-900 dark:text-white">{donor.email}</span>
+                    <span className="text-gray-900 dark:text-white">
+                      {donor.email}
+                    </span>
                   </div>
                 )}
               </div>
@@ -473,13 +492,15 @@ const DonorDetailsPage = () => {
                   <input
                     type="tel"
                     value={formData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    onChange={(e) => handleInputChange("phone", e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 ) : (
                   <div className="flex items-center space-x-2 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
                     <Phone className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                    <span className="text-gray-900 dark:text-white">{donor.phone}</span>
+                    <span className="text-gray-900 dark:text-white">
+                      {donor.phone}
+                    </span>
                   </div>
                 )}
               </div>
@@ -489,23 +510,12 @@ const DonorDetailsPage = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Status
                 </label>
-                {editing ? (
-                  <select
-                    value={formData.isActive}
-                    onChange={(e) => handleInputChange('isActive', e.target.value === 'true')}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value={true}>Active</option>
-                    <option value={false}>Inactive</option>
-                  </select>
-                ) : (
-                  <div className="flex items-center space-x-2 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
-                    <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClasses(donor.isActive)}`}>
-                      {donor.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-                )}
+                <div className="flex items-center space-x-2 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
+                  <CheckCircle className="h-4 w-4 text-green-500 dark:text-green-400" />
+                  <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                    Active
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -517,14 +527,16 @@ const DonorDetailsPage = () => {
               {editing ? (
                 <textarea
                   value={formData.address}
-                  onChange={(e) => handleInputChange('address', e.target.value)}
+                  onChange={(e) => handleInputChange("address", e.target.value)}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               ) : (
                 <div className="flex items-start space-x-2 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
                   <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400 mt-0.5" />
-                  <span className="text-gray-900 dark:text-white">{donor.address}</span>
+                  <span className="text-gray-900 dark:text-white">
+                    {address || "No address provided"}
+                  </span>
                 </div>
               )}
             </div>
@@ -534,21 +546,23 @@ const DonorDetailsPage = () => {
               {/* Donation Amount */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Last Donation Amount
+                  Donation Amount
                 </label>
                 {editing ? (
                   <input
                     type="number"
                     step="0.01"
-                    value={formData.donationAmount}
-                    onChange={(e) => handleInputChange('donationAmount', e.target.value)}
+                    value={formData.donation_amount}
+                    onChange={(e) =>
+                      handleInputChange("donation_amount", e.target.value)
+                    }
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 ) : (
                   <div className="flex items-center space-x-2 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
                     <IndianRupee className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                     <span className="text-gray-900 dark:text-white font-semibold">
-                      {formatCurrency(donor.donationAmount)}
+                      {formatCurrency(donationAmount)}
                     </span>
                   </div>
                 )}
@@ -557,20 +571,22 @@ const DonorDetailsPage = () => {
               {/* Donation Date */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Last Donation Date
+                  Donation Date
                 </label>
                 {editing ? (
                   <input
                     type="date"
-                    value={formData.donationDate}
-                    onChange={(e) => handleInputChange('donationDate', e.target.value)}
+                    value={formData.donation_date}
+                    onChange={(e) =>
+                      handleInputChange("donation_date", e.target.value)
+                    }
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 ) : (
                   <div className="flex items-center space-x-2 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
                     <Calendar className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                     <span className="text-gray-900 dark:text-white">
-                      {new Date(donor.donationDate).toLocaleDateString()}
+                      {formatDate(donationDate)}
                     </span>
                   </div>
                 )}
@@ -583,10 +599,13 @@ const DonorDetailsPage = () => {
                 </label>
                 {editing ? (
                   <select
-                    value={formData.paymentMethod}
-                    onChange={(e) => handleInputChange('paymentMethod', e.target.value)}
+                    value={formData.payment_method}
+                    onChange={(e) =>
+                      handleInputChange("payment_method", e.target.value)
+                    }
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
+                    <option value="">Select payment method</option>
                     <option value="Credit Card">Credit Card</option>
                     <option value="Debit Card">Debit Card</option>
                     <option value="Bank Transfer">Bank Transfer</option>
@@ -599,9 +618,17 @@ const DonorDetailsPage = () => {
                 ) : (
                   <div className="flex items-center space-x-2 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
                     <CreditCard className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPaymentMethodBadgeClasses(donor.paymentMethod)}`}>
-                      {donor.paymentMethod}
-                    </span>
+                    {paymentMethod ? (
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPaymentMethodBadgeClasses(paymentMethod)}`}
+                      >
+                        {paymentMethod}
+                      </span>
+                    ) : (
+                      <span className="text-gray-500 dark:text-gray-400">
+                        No payment method specified
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
@@ -615,60 +642,20 @@ const DonorDetailsPage = () => {
               {editing ? (
                 <textarea
                   value={formData.notes}
-                  onChange={(e) => handleInputChange('notes', e.target.value)}
+                  onChange={(e) => handleInputChange("notes", e.target.value)}
                   rows={3}
                   placeholder="Add any notes about this donor..."
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                  />
+                />
               ) : (
                 <div className="flex items-start space-x-2 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
                   <FileText className="h-4 w-4 text-gray-500 dark:text-gray-400 mt-0.5" />
-                  <span className="text-gray-900 dark:text-white">{donor.notes || 'No notes available.'}</span>
+                  <span className="text-gray-900 dark:text-white">
+                    {notes || "No notes available."}
+                  </span>
                 </div>
               )}
             </div>
-          </div>
-        </div>
-
-        {/* Donation History */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Donation History</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Overview of previous donations made by this donor.
-            </p>
-          </div>
-          <div className="p-6 overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Method</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Notes</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {donor.donationHistory?.map((entry, index) => (
-                  <tr key={index}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {formatDate(entry.date)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {formatCurrency(entry.amount)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPaymentMethodBadgeClasses(entry.paymentMethod)}`}>
-                        {entry.paymentMethod}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                      {entry.notes}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </div>
 
@@ -678,28 +665,30 @@ const DonorDetailsPage = () => {
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-sm w-full p-6 space-y-4">
               <div className="flex items-center space-x-3">
                 <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Confirm Deletion</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Confirm Deletion
+                </h3>
               </div>
               <p className="text-sm text-gray-700 dark:text-gray-300">
-                Are you sure you want to delete this donor? This action cannot be undone.
+                Are you sure you want to delete this donor? This action cannot
+                be undone.
               </p>
               <div className="flex justify-end space-x-3">
                 <button
                   onClick={() => setShowDeleteDialog(false)}
-                  className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
+                  className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
-                  className="px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 rounded-lg disabled:opacity-50"
+                  className="px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 rounded-lg disabled:opacity-50 transition-colors"
                 >
                   {deleting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    'Delete'
-                  )}
+                    <Loader2 className="h-4 w-4 animate-spin inline-block mr-2" />
+                  ) : null}
+                  {deleting ? "Deleting..." : "Delete"}
                 </button>
               </div>
             </div>
