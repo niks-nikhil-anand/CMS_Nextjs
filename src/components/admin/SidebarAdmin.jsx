@@ -9,7 +9,8 @@ import {
   UserCheck,
   Database,
   FolderOpen,
-  TrendingUp
+  TrendingUp,
+  Shredder
 } from 'lucide-react'
 
 
@@ -31,6 +32,7 @@ const NavigationComponent = () => {
     { path: '/admin/addCandidate', label: 'Add Candidates', icon: UserCheck },
     { path: '/admin/distributeData', label: 'Distribute Data', icon: Database },
     { path: '/admin/viewUploadedFiles', label: 'View Uploaded Files', icon: FolderOpen },
+    { path: '/admin/data', label: 'View Data', icon: Shredder },
     { path: '/admin/notifications', label: 'Candidate Statistics', icon: TrendingUp },
     { path: '/admin/settings', label: 'Settings', icon: Settings },
   ]

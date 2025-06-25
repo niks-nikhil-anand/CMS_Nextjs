@@ -1,5 +1,6 @@
 import connectDB from "@/lib/dbConnect";
 import donorDataModels from "@/models/dataModels";
+import uploadFileModels from "@/models/uploadFileModels";
 import { NextResponse } from "next/server";
 import Papa from "papaparse";
 
@@ -187,18 +188,26 @@ export async function POST(request) {
   }
 }
 
+
 export async function GET() {
   try {
     console.log("[GET] /api/donors — Fetching donor list");
-    console.log("Database is connecting")
-    await connectDB(); 
-    console.log("Database is connected")
+    console.log("Connecting to database...");
+    await connectDB();
+    console.log("✅ Database connected");
 
-    const donors = await donorDataModels.find();
-    console.log(donors)
+    const donors = await donorDataModels
+      .find()
+      .sort({ createdAt: -1 }) // Show newest first
+      .populate("uploadFile", "fileName fileType uploadedBy createdAt"); 
+
+    console.log("📦 Donors found:", donors.length);
 
     return NextResponse.json(
-      { message: "Donors fetched successfully", donors },
+      {
+        message: "Donors fetched successfully",
+        donors,
+      },
       { status: 200 }
     );
   } catch (error) {
@@ -209,3 +218,4 @@ export async function GET() {
     );
   }
 }
+

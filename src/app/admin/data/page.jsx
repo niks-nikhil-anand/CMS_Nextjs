@@ -13,7 +13,7 @@ import {
   Heart,
   Loader2,
   X,
-  IndianRupee
+  Users
 } from 'lucide-react';
 
 const DonorPage = () => {
@@ -24,9 +24,7 @@ const DonorPage = () => {
   
   // Search and Filter States
   const [searchTerm, setSearchTerm] = useState('');
-  const [paymentMethodFilter, setPaymentMethodFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [amountRangeFilter, setAmountRangeFilter] = useState('all');
   
   // Sorting States
   const [sortField, setSortField] = useState('createdAt');
@@ -45,7 +43,7 @@ const DonorPage = () => {
   const fetchDonors = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/donorData');
+      const response = await fetch('/api/data');
 
       if (!response.ok) {
         throw new Error('Failed to fetch donors');
@@ -93,14 +91,9 @@ const DonorPage = () => {
       let aValue = a[sortField];
       let bValue = b[sortField];
       
-      if (sortField === 'createdAt' || sortField === 'donationDate' || sortField === 'lastDonated') {
+      if (sortField === 'createdAt' || sortField === 'updatedAt') {
         aValue = new Date(aValue);
         bValue = new Date(bValue);
-      }
-      
-      if (sortField === 'donationAmount' || sortField === 'totalDonated') {
-        aValue = Number(aValue) || 0;
-        bValue = Number(bValue) || 0;
       }
       
       if (typeof aValue === 'string') {
@@ -116,18 +109,6 @@ const DonorPage = () => {
     });
   };
 
-  // Filter donors by amount range
-  const filterByAmountRange = (donor, range) => {
-    const amount = donor.donationAmount || 0;
-    switch (range) {
-      case 'under1000': return amount < 1000;
-      case '1000to5000': return amount >= 1000 && amount <= 5000;
-      case '5000to10000': return amount >= 5000 && amount <= 10000;
-      case 'above10000': return amount > 10000;
-      default: return true;
-    }
-  };
-
   // Filter and search donors
   useEffect(() => {
     let filtered = donors;
@@ -141,23 +122,17 @@ const DonorPage = () => {
       );
     }
 
-    // Apply payment method filter
-    if (paymentMethodFilter !== 'all') {
-      filtered = filtered.filter(donor => donor.paymentMethod === paymentMethodFilter);
-    }
-
-    // Apply status filter
+    // Apply status filter (based on recent activity - created in last 30 days = active)
     if (statusFilter !== 'all') {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
       filtered = filtered.filter(donor => {
-        if (statusFilter === 'active') return donor.isActive !== false;
-        if (statusFilter === 'inactive') return donor.isActive === false;
+        const isRecentlyActive = new Date(donor.createdAt) > thirtyDaysAgo;
+        if (statusFilter === 'active') return isRecentlyActive;
+        if (statusFilter === 'inactive') return !isRecentlyActive;
         return true;
       });
-    }
-
-    // Apply amount range filter
-    if (amountRangeFilter !== 'all') {
-      filtered = filtered.filter(donor => filterByAmountRange(donor, amountRangeFilter));
     }
 
     // Apply sorting
@@ -165,7 +140,7 @@ const DonorPage = () => {
 
     setFilteredDonors(filtered);
     setCurrentPage(1); // Reset to first page when filters change
-  }, [donors, searchTerm, paymentMethodFilter, statusFilter, amountRangeFilter, sortField, sortDirection]);
+  }, [donors, searchTerm, statusFilter, sortField, sortDirection]);
 
   // Pagination logic
   const indexOfLastDonor = currentPage * donorsPerPage;
@@ -189,34 +164,15 @@ const DonorPage = () => {
     return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
   };
 
-  // Get payment method badge classes
-  const getPaymentMethodBadgeClasses = (method) => {
-    switch (method) {
-      case 'Credit Card': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-      case 'Debit Card': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'Bank Transfer': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300';
-      case 'UPI': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
-      case 'PayPal': return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300';
-      case 'Cash': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      case 'Check': return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
-    }
-  };
-
-  // Get status badge classes
-  const getStatusBadgeClasses = (isActive) => {
-    return isActive !== false 
+  // Get status badge classes (based on recent activity)
+  const getStatusBadgeClasses = (createdAt) => {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const isRecentlyActive = new Date(createdAt) > thirtyDaysAgo;
+    
+    return isRecentlyActive
       ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-      : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-  };
-
-  // Format currency
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0
-    }).format(amount || 0);
+      : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
   };
 
   // Format date
@@ -236,8 +192,10 @@ const DonorPage = () => {
     setShowDeleteDialog(true);
   };
 
-  // Calculate total donated amount
-  const totalDonatedAmount = donors.reduce((sum, donor) => sum + (donor.donationAmount || 0), 0);
+  // Get additional field value
+  const getAdditionalFieldValue = (donor, fieldKey) => {
+    return donor.additionalFields?.get?.(fieldKey) || donor.additionalFields?.[fieldKey] || 'N/A';
+  };
 
   useEffect(() => {
     fetchDonors();
@@ -255,7 +213,7 @@ const DonorPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="max-h-[85vh] bg-gray-50 dark:bg-gray-900 overflow-y-auto transition-colors duration-200">
       <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -269,12 +227,16 @@ const DonorPage = () => {
             </div>
           </div>
           <div className="flex flex-col space-y-2">
-            <div className="text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700">
-              Total Donors: {donors.length}
+            <div className="text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center space-x-1">
+              <Users className="h-4 w-4" />
+              <span>Total Donors: {donors.length}</span>
             </div>
-            <div className="text-sm text-green-600 dark:text-green-400 bg-white dark:bg-gray-800 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center space-x-1">
-              <IndianRupee className="h-4 w-4" />
-              <span>Total Donated: {formatCurrency(totalDonatedAmount)}</span>
+            <div className="text-sm text-blue-600 dark:text-blue-400 bg-white dark:bg-gray-800 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700">
+              Active: {donors.filter(d => {
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                return new Date(d.createdAt) > thirtyDaysAgo;
+              }).length}
             </div>
           </div>
         </div>
@@ -307,23 +269,6 @@ const DonorPage = () => {
               </div>
             </div>
             
-            {/* Payment Method Filter */}
-            <select
-              value={paymentMethodFilter}
-              onChange={(e) => setPaymentMethodFilter(e.target.value)}
-              className="w-full lg:w-48 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">All Payment Methods</option>
-              <option value="Credit Card">Credit Card</option>
-              <option value="Debit Card">Debit Card</option>
-              <option value="Bank Transfer">Bank Transfer</option>
-              <option value="UPI">UPI</option>
-              <option value="PayPal">PayPal</option>
-              <option value="Cash">Cash</option>
-              <option value="Check">Check</option>
-              <option value="Other">Other</option>
-            </select>
-            
             {/* Status Filter */}
             <select
               value={statusFilter}
@@ -331,21 +276,8 @@ const DonorPage = () => {
               className="w-full lg:w-48 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-
-            {/* Amount Range Filter */}
-            <select
-              value={amountRangeFilter}
-              onChange={(e) => setAmountRangeFilter(e.target.value)}
-              className="w-full lg:w-48 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">All Amounts</option>
-              <option value="under1000">Under ₹1,000</option>
-              <option value="1000to5000">₹1,000 - ₹5,000</option>
-              <option value="5000to10000">₹5,000 - ₹10,000</option>
-              <option value="above10000">Above ₹10,000</option>
+              <option value="active">Active (Recent)</option>
+              <option value="inactive">Inactive (Older)</option>
             </select>
           </div>
         </div>
@@ -385,34 +317,21 @@ const DonorPage = () => {
                   </th>
                   <th className="px-6 py-3 text-left">
                     <button 
-                      onClick={() => handleSort('donationAmount')}
+                      onClick={() => handleSort('phone')}
                       className="flex items-center space-x-1 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hover:text-gray-700 dark:hover:text-gray-200"
                     >
-                      <span>Amount</span>
-                      {getSortIcon('donationAmount')}
+                      <span>Phone</span>
+                      {getSortIcon('phone')}
                     </button>
                   </th>
+                 
                   <th className="px-6 py-3 text-left">
                     <button 
-                      onClick={() => handleSort('paymentMethod')}
+                      onClick={() => handleSort('createdAt')}
                       className="flex items-center space-x-1 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hover:text-gray-700 dark:hover:text-gray-200"
                     >
-                      <span>Payment Method</span>
-                      {getSortIcon('paymentMethod')}
-                    </button>
-                  </th>
-                  <th className="px-6 py-3 text-left">
-                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Status
-                    </span>
-                  </th>
-                  <th className="px-6 py-3 text-left">
-                    <button 
-                      onClick={() => handleSort('donationDate')}
-                      className="flex items-center space-x-1 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hover:text-gray-700 dark:hover:text-gray-200"
-                    >
-                      <span>Donation Date</span>
-                      {getSortIcon('donationDate')}
+                      <span>Created Date</span>
+                      {getSortIcon('createdAt')}
                     </button>
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -422,14 +341,16 @@ const DonorPage = () => {
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {currentDonors.map((donor) => (
-                  <tr key={donor._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                  <tr key={donor.id || donor._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900 dark:text-white">
                         {donor.fullName}
                       </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {donor.phone}
-                      </div>
+                      {donor.additionalFields && Object.keys(donor.additionalFields).length > 0 && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          +{Object.keys(donor.additionalFields).length} additional fields
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -437,32 +358,19 @@ const DonorPage = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-semibold text-green-600 dark:text-green-400">
-                        {formatCurrency(donor.donationAmount)}
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        {donor.phone}
                       </div>
-                      {donor.totalDonated && donor.totalDonated !== donor.donationAmount && (
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          Total: {formatCurrency(donor.totalDonated)}
-                        </div>
-                      )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPaymentMethodBadgeClasses(donor.paymentMethod)}`}>
-                        {donor.paymentMethod}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClasses(donor.isActive)}`}>
-                        {donor.isActive !== false ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
+                    
+                  
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
-                      {formatDate(donor.donationDate)}
+                      {formatDate(donor.createdAt)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">
                         <button
-                          onClick={() => handleViewDonor(donor._id)}
+                          onClick={() => handleViewDonor(donor.id || donor._id)}
                           className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded cursor-pointer"
                           title="View Donor"
                         >
@@ -470,11 +378,11 @@ const DonorPage = () => {
                         </button>
                         <button
                           onClick={() => openDeleteDialog(donor)}
-                          disabled={deletingDonorId === donor._id}
+                          disabled={deletingDonorId === (donor.id || donor._id)}
                           className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded disabled:opacity-50 cursor-pointer"
                           title="Delete Donor"
                         >
-                          {deletingDonorId === donor._id ? (
+                          {deletingDonorId === (donor.id || donor._id) ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
                             <Trash2 className="h-4 w-4" />
@@ -543,11 +451,11 @@ const DonorPage = () => {
                   Cancel
                 </button>
                 <button
-                  onClick={() => handleDeleteDonor(donorToDelete._id)}
-                  disabled={deletingDonorId === donorToDelete?._id}
+                  onClick={() => handleDeleteDonor(donorToDelete.id || donorToDelete._id)}
+                  disabled={deletingDonorId === (donorToDelete?.id || donorToDelete?._id)}
                   className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg disabled:opacity-50 flex items-center space-x-2"
                 >
-                  {deletingDonorId === donorToDelete?._id ? (
+                  {deletingDonorId === (donorToDelete?.id || donorToDelete?._id) ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
                       <span>Deleting...</span>

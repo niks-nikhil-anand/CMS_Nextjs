@@ -134,8 +134,8 @@ const FileDistributionDashboard = () => {
   }
 
   return (
-    <div className="max-h-[85vh] bg-gray-50 dark:bg-gray-900 overflow-y-auto transition-colors duration-200">
-      <div className="p-6">
+    <div className=" bg-gray-50 dark:bg-gray-900 overflow-y-auto transition-colors duration-200">
+      <div className="p-6 max-h-[85vh]">
         <div className="mx-auto space-y-6">
           {/* Header with Back Button and Dark Mode Toggle */}
           <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
