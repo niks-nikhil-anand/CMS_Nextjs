@@ -134,80 +134,80 @@ const FileDistributionDashboard = () => {
   }
 
   return (
-    <div className="max-h-[85vh] bg-gray-50 overflow-y-auto">
+    <div className="max-h-[85vh] bg-gray-50 dark:bg-gray-900 overflow-y-auto transition-colors duration-200">
       <div className="p-6">
-        <div className=" mx-auto space-y-6">
-          {/* Header with Back Button */}
-          <div className="border-b border-gray-200 pb-4">
-            <div className="flex items-center gap-4 mb-4">
+        <div className="mx-auto space-y-6">
+          {/* Header with Back Button and Dark Mode Toggle */}
+          <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
+            <div className="flex items-center justify-between mb-4">
               <button
                 onClick={handleBack}
-                className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors duration-200"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back
               </button>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">File Distribution Dashboard</h1>
-            <p className="text-gray-600 mt-2">Manage and track distributed file data</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">File Distribution Dashboard</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">Manage and track distributed file data</p>
           </div>
 
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Uploaded File Details */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                   <FileText className="h-5 w-5" />
                   Uploaded File Details
                 </h2>
-                <p className="text-gray-600 text-sm mt-1">
+                <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
                   Original file information and metadata
                 </p>
               </div>
               <div className="p-6 space-y-4">
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 font-medium">File Name:</span>
-                    <span className="text-gray-900 font-mono text-sm">{uploadedFile?.fileName}</span>
+                    <span className="text-gray-600 dark:text-gray-400 font-medium">File Name:</span>
+                    <span className="text-gray-900 dark:text-white font-mono text-sm">{uploadedFile?.fileName}</span>
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 font-medium">File Type:</span>
-                    <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm">
+                    <span className="text-gray-600 dark:text-gray-400 font-medium">File Type:</span>
+                    <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-sm">
                       {uploadedFile?.fileType}
                     </span>
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 font-medium">File Size:</span>
-                    <span className="text-gray-900">{formatFileSize(uploadedFile?.fileSize)}</span>
+                    <span className="text-gray-600 dark:text-gray-400 font-medium">File Size:</span>
+                    <span className="text-gray-900 dark:text-white">{formatFileSize(uploadedFile?.fileSize)}</span>
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 font-medium">Total Rows:</span>
-                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-sm flex items-center gap-1">
+                    <span className="text-gray-600 dark:text-gray-400 font-medium">Total Rows:</span>
+                    <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded text-sm flex items-center gap-1">
                       <Database className="h-3 w-3" />
                       {uploadedFile?.totalRows}
                     </span>
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 font-medium">Total Columns:</span>
-                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-sm flex items-center gap-1">
+                    <span className="text-gray-600 dark:text-gray-400 font-medium">Total Columns:</span>
+                    <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded text-sm flex items-center gap-1">
                       <Grid3X3 className="h-3 w-3" />
                       {uploadedFile?.totalColumns}
                     </span>
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 font-medium">Uploaded By:</span>
-                    <span className="text-gray-900">{uploadedFile?.uploadedByEmail}</span>
+                    <span className="text-gray-600 dark:text-gray-400 font-medium">Uploaded By:</span>
+                    <span className="text-gray-900 dark:text-white">{uploadedFile?.uploadedByEmail}</span>
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 font-medium">Uploaded:</span>
-                    <span className="text-gray-600 text-sm flex items-center gap-1">
+                    <span className="text-gray-600 dark:text-gray-400 font-medium">Uploaded:</span>
+                    <span className="text-gray-600 dark:text-gray-400 text-sm flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       {formatDate(uploadedFile?.createdAt)}
                     </span>
@@ -217,36 +217,36 @@ const FileDistributionDashboard = () => {
             </div>
 
             {/* Distribution Summary */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                   <Users className="h-5 w-5" />
                   Distribution Summary
                 </h2>
-                <p className="text-gray-600 text-sm mt-1">
+                <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
                   Overview of file distribution across candidates
                 </p>
               </div>
               <div className="p-6 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-900">{distributedFiles?.length}</div>
-                    <div className="text-gray-600 text-sm">Total Distributions</div>
+                  <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg transition-colors duration-200">
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">{distributedFiles?.length}</div>
+                    <div className="text-gray-600 dark:text-gray-400 text-sm">Total Distributions</div>
                   </div>
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-900">
+                  <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg transition-colors duration-200">
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
                       {distributedFiles?.reduce((sum, file) => sum + file.data.length, 0)}
                     </div>
-                    <div className="text-gray-600 text-sm">Total Records</div>
+                    <div className="text-gray-600 dark:text-gray-400 text-sm">Total Records</div>
                   </div>
                 </div>
                 
                 <div className="space-y-2">
-                  <h4 className="font-medium text-gray-900">Distribution Breakdown:</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-white">Distribution Breakdown:</h4>
                   {distributedFiles?.map((dist, index) => (
-                    <div key={dist._id} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
-                      <span className="text-gray-900">{getCandidateName(dist.candidate)}</span>
-                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm">
+                    <div key={dist._id} className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                      <span className="text-gray-900 dark:text-white">{getCandidateName(dist.candidate)}</span>
+                      <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-sm">
                         {dist.data.length} records
                       </span>
                     </div>
@@ -257,67 +257,67 @@ const FileDistributionDashboard = () => {
           </div>
 
           {/* Distributed Files List */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                 <Download className="h-5 w-5" />
                 Distributed Files
               </h2>
-              <p className="text-gray-600 text-sm mt-1">
+              <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
                 Detailed view of each distributed file segment
               </p>
             </div>
             <div className="p-6">
               <div className="space-y-4">
                 {distributedFiles?.map((distributedFile, index) => (
-                  <div key={distributedFile._id} className="border border-gray-200 rounded-lg">
+                  <div key={distributedFile._id} className="border border-gray-200 dark:border-gray-700 rounded-lg transition-colors duration-200">
                     <div 
-                      className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                      className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                       onClick={() => toggleExpanded(distributedFile._id)}
                     >
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-gray-500" />
-                            <span className="font-medium text-gray-900">
+                            <User className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                            <span className="font-medium text-gray-900 dark:text-white">
                               {getCandidateName(distributedFile.candidate)}
                             </span>
                             {expandedFile === distributedFile._id ? 
-                              <ChevronDown className="h-4 w-4 text-gray-500" /> : 
-                              <ChevronRight className="h-4 w-4 text-gray-500" />
+                              <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400" /> : 
+                              <ChevronRight className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                             }
                           </div>
-                          <div className="text-sm text-gray-600">
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
                             {distributedFile.candidateEmail}
                           </div>
                         </div>
                         
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
-                            <Database className="h-4 w-4 text-gray-500" />
-                            <span className="font-medium text-gray-900">Data Records</span>
+                            <Database className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                            <span className="font-medium text-gray-900 dark:text-white">Data Records</span>
                           </div>
-                          <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-sm">
+                          <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded text-sm">
                             {distributedFile.data.length} records
                           </span>
                         </div>
                         
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-gray-500" />
-                            <span className="font-medium text-gray-900">Distributed By</span>
+                            <User className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                            <span className="font-medium text-gray-900 dark:text-white">Distributed By</span>
                           </div>
-                          <div className="text-sm text-gray-600">
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
                             {distributedFile.distributedByEmail}
                           </div>
                         </div>
                         
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-gray-500" />
-                            <span className="font-medium text-gray-900">Distributed At</span>
+                            <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                            <span className="font-medium text-gray-900 dark:text-white">Distributed At</span>
                           </div>
-                          <div className="text-sm text-gray-600">
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
                             {formatDate(distributedFile.time)}
                           </div>
                         </div>
@@ -326,64 +326,64 @@ const FileDistributionDashboard = () => {
                     
                     {/* Expanded Data View */}
                     {expandedFile === distributedFile._id && (
-                      <div className="border-t border-gray-200 bg-gray-50">
+                      <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 transition-colors duration-200">
                         <div className="p-4">
-                          <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+                          <h4 className="font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                             <Database className="h-4 w-4" />
                             Distributed Data ({distributedFile.data.length} records)
                           </h4>
                           <div className="space-y-3 max-h-96 overflow-y-auto">
                             {distributedFile.data.map((record, recordIndex) => (
-                              <div key={record._id} className="bg-white border border-gray-200 rounded-lg p-4">
+                              <div key={record._id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4 transition-colors duration-200">
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                                   <div className="space-y-2">
                                     <div className="flex items-center gap-2">
-                                      <User className="h-3 w-3 text-gray-500" />
-                                      <span className="font-medium text-gray-900">Personal Info</span>
+                                      <User className="h-3 w-3 text-gray-500 dark:text-gray-400" />
+                                      <span className="font-medium text-gray-900 dark:text-white">Personal Info</span>
                                     </div>
                                     <div className="pl-5 space-y-1">
-                                      <div><span className="text-gray-600">Name:</span> <span className="text-gray-900 font-medium">{record.fullName}</span></div>
+                                      <div><span className="text-gray-600 dark:text-gray-400">Name:</span> <span className="text-gray-900 dark:text-white font-medium">{record.fullName}</span></div>
                                       <div className="flex items-center gap-1">
-                                        <Mail className="h-3 w-3 text-gray-500" />
-                                        <span className="text-gray-600">Email:</span> 
-                                        <span className="text-gray-900">{record.email}</span>
+                                        <Mail className="h-3 w-3 text-gray-500 dark:text-gray-400" />
+                                        <span className="text-gray-600 dark:text-gray-400">Email:</span> 
+                                        <span className="text-gray-900 dark:text-white">{record.email}</span>
                                       </div>
                                       <div className="flex items-center gap-1">
-                                        <Phone className="h-3 w-3 text-gray-500" />
-                                        <span className="text-gray-600">Phone:</span> 
-                                        <span className="text-gray-900">{record.phone}</span>
+                                        <Phone className="h-3 w-3 text-gray-500 dark:text-gray-400" />
+                                        <span className="text-gray-600 dark:text-gray-400">Phone:</span> 
+                                        <span className="text-gray-900 dark:text-white">{record.phone}</span>
                                       </div>
                                     </div>
                                   </div>
                                   
                                   <div className="space-y-2">
                                     <div className="flex items-center gap-2">
-                                      <MapPin className="h-3 w-3 text-gray-500" />
-                                      <span className="font-medium text-gray-900">Address</span>
+                                      <MapPin className="h-3 w-3 text-gray-500 dark:text-gray-400" />
+                                      <span className="font-medium text-gray-900 dark:text-white">Address</span>
                                     </div>
-                                    <div className="pl-5 text-gray-600 text-xs">
+                                    <div className="pl-5 text-gray-600 dark:text-gray-400 text-xs">
                                       {record.address}
                                     </div>
                                   </div>
                                   
                                   <div className="space-y-2">
                                     <div className="flex items-center gap-2">
-                                      <DollarSign className="h-3 w-3 text-gray-500" />
-                                      <span className="font-medium text-gray-900">Donation Details</span>
+                                      <DollarSign className="h-3 w-3 text-gray-500 dark:text-gray-400" />
+                                      <span className="font-medium text-gray-900 dark:text-white">Donation Details</span>
                                     </div>
                                     <div className="pl-5 space-y-1">
                                       <div>
-                                        <span className="text-gray-600">Amount:</span> 
-                                        <span className="text-gray-900 font-medium ml-1">{formatCurrency(record.donation_amount)}</span>
+                                        <span className="text-gray-600 dark:text-gray-400">Amount:</span> 
+                                        <span className="text-gray-900 dark:text-white font-medium ml-1">{formatCurrency(record.donation_amount)}</span>
                                       </div>
                                       <div>
-                                        <span className="text-gray-600">Date:</span> 
-                                        <span className="text-gray-900 ml-1">{record.donation_date}</span>
+                                        <span className="text-gray-600 dark:text-gray-400">Date:</span> 
+                                        <span className="text-gray-900 dark:text-white ml-1">{record.donation_date}</span>
                                       </div>
                                       <div className="flex items-center gap-1">
-                                        <CreditCard className="h-3 w-3 text-gray-500" />
-                                        <span className="text-gray-600">Method:</span> 
-                                        <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs ml-1">
+                                        <CreditCard className="h-3 w-3 text-gray-500 dark:text-gray-400" />
+                                        <span className="text-gray-600 dark:text-gray-400">Method:</span> 
+                                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs ml-1">
                                           {record.payment_method}
                                         </span>
                                       </div>
@@ -392,18 +392,18 @@ const FileDistributionDashboard = () => {
                                 </div>
                                 
                                 {record.notes && (
-                                  <div className="mt-3 pt-3 border-t border-gray-200">
+                                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
                                     <div className="flex items-start gap-2">
-                                      <FileText className="h-3 w-3 text-gray-500 mt-0.5" />
+                                      <FileText className="h-3 w-3 text-gray-500 dark:text-gray-400 mt-0.5" />
                                       <div>
-                                        <span className="text-gray-600 text-sm font-medium">Notes:</span>
-                                        <p className="text-gray-900 text-sm mt-1">{record.notes}</p>
+                                        <span className="text-gray-600 dark:text-gray-400 text-sm font-medium">Notes:</span>
+                                        <p className="text-gray-900 dark:text-white text-sm mt-1">{record.notes}</p>
                                       </div>
                                     </div>
                                   </div>
                                 )}
                                 
-                                <div className="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-500">
+                                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600 text-xs text-gray-500 dark:text-gray-400">
                                   Record #{recordIndex + 1} • Created: {formatDate(record.createdAt)}
                                 </div>
                               </div>
@@ -422,5 +422,6 @@ const FileDistributionDashboard = () => {
     </div>
   );
 };
+
 
 export default FileDistributionDashboard;

@@ -1,8 +1,11 @@
 "use client"
 import React, { useState, useEffect } from 'react'
 import { Sun, Moon, LogOut } from 'lucide-react'
+import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 
 const NavbarAdmin = () => {
+    const router = useRouter(); 
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [mounted, setMounted] = useState(false)
 
@@ -51,15 +54,18 @@ const NavbarAdmin = () => {
   }
 
   const handleLogout = async () => {
-    try {
-      // Simulate logout API call
-      console.log("Logging out...");
-      // In real app: router.push("/");
-      alert("Logout successful! (Demo)");
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  };
+     try {
+    const res = await fetch("/api/auth/logout", {
+      method: "POST",
+    });
+    if (!res.ok) throw new Error("Failed to logout");
+    router.push("/");
+  } catch (error) {
+    console.error("Logout failed:", error);
+    toast.error("Logout failed. Please try again.");
+  }
+};
+
 
   return (
     <div>
@@ -90,15 +96,12 @@ const NavbarAdmin = () => {
             )}
           </button>
 
-          {/* User Profile */}
-          <div className="flex items-center gap-3">
-            <span className="font-medium text-gray-900 dark:text-white hidden sm:block">Admin</span>
-          </div>
+          
 
           {/* Logout Button */}
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-3 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors cursor-pointer"
             aria-label="Logout"
           >
             <LogOut size={16} />
