@@ -6,6 +6,11 @@ const uploadFileSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    distributedData: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DistributedData",
+      required: true,
+    }],
     fileType: {
       type: String,
       enum: [".xlsx", ".xls", ".csv"],
@@ -13,7 +18,7 @@ const uploadFileSchema = new mongoose.Schema(
       required: true,
     },
     fileSize: {
-      type: Number, 
+      type: Number,
       required: true,
     },
     totalRows: {

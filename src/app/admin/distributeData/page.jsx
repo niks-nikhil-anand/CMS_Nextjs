@@ -271,6 +271,40 @@ const DataDistributionApp = () => {
     URL.revokeObjectURL(url);
   };
 
+  const handleSubmit = async () => {
+    try {
+      console.log("Preparing data for submission...");
+
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      formData.append("managerId", selectedManager._id);
+      formData.append(
+        "candidateIds",
+        JSON.stringify(selectedCandidates.map((c) => c._id))
+      );
+      formData.append("distributionMethod", distributionMethod);
+
+      console.log("Form Data:");
+      console.log("File:", selectedFile?.name);
+      console.log("Manager ID:", selectedManager?._id);
+      console.log(
+        "Candidate IDs:",
+        selectedCandidates.map((c) => c._id)
+      );
+      console.log("Distribution Method:", distributionMethod);
+
+      const response = await axios.post("/api/distribute-data", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      console.log("✅ Distribution successful:", response.data);
+      resetForm();
+    } catch (error) {
+      console.error("❌ Distribution failed:", error);
+      setError("Failed to distribute data. Please try again.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="w-full  mx-auto px-4 sm:px-6  py-8">
@@ -801,14 +835,28 @@ const DataDistributionApp = () => {
               <ArrowLeft className="w-5 h-5" />
               Back
             </button>
-            <button
-              onClick={nextStep}
-              disabled={!canProceed() || isDistributing}
-              className="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 "
-            >
-              Next
-              <ArrowRight className="w-5 h-5" />
-            </button>
+            {currentStep === 4 ? (
+              <button
+                onClick={() => {
+                  handleDistribution();
+                  handleSubmit();
+                }}
+                disabled={isDistributing}
+                className="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              >
+                {isDistributing ? "Distributing..." : "Distribute Data"}
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            ) : (
+              <button
+                onClick={nextStep}
+                disabled={!canProceed() || isDistributing}
+                className="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              >
+                Next
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            )}
           </div>
         </div>
       </div>

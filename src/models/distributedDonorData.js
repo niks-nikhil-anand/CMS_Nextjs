@@ -1,27 +1,32 @@
 import mongoose from "mongoose";
 
-const distributedDonorDataSchema = new mongoose.Schema(
+const distributedDataSchema = new mongoose.Schema(
   {
     candidate: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+      required: true
     },
-    donorData: [
+    data: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "DonorData",
+        ref: "Data",
+        required: true
       }
     ],
-    date: {
-      type: Date,
-      required: true,
-      default: Date.now,
+    distributedBy: {
+     type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true
     },
+    time:{
+
+    }
   },
   {
     timestamps: true,
   }
 );
 
-export default mongoose.models.DistributedDonorData ||
-  mongoose.model("DistributedDonorData", distributedDonorDataSchema);
+export default mongoose.models.DistributedData ||
+  mongoose.model("DistributedData", distributedDataSchema);

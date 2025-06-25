@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 
-const donorDataSchema = new mongoose.Schema(
+const dataSchema = new mongoose.Schema(
   {
     fullName: {
       type: String,
@@ -30,7 +30,6 @@ const donorDataSchema = new mongoose.Schema(
     uploadFile: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "UploadFile",
-      required: true,
     },
     additionalFields: {
       type: Map,
@@ -53,9 +52,7 @@ const donorDataSchema = new mongoose.Schema(
     },
   }
 );
-
-// Virtual to return all fields in a flattened format
-donorDataSchema.virtual("allFields").get(function () {
+dataSchema.virtual("allFields").get(function () {
   return {
     fullName: this.fullName,
     email: this.email,
@@ -66,5 +63,5 @@ donorDataSchema.virtual("allFields").get(function () {
 });
 
 // Export model
-export default mongoose.models.DonorData ||
-  mongoose.model("DonorData", donorDataSchema);
+export default mongoose.models.Data ||
+  mongoose.model("Data", dataSchema);

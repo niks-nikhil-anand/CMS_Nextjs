@@ -1,5 +1,5 @@
 import connectDB from "@/lib/dbConnect";
-import donorDataModels from "@/models/donorDataModels";
+import donorDataModels from "@/models/dataModels";
 import { NextResponse } from "next/server";
 import Papa from "papaparse";
 
