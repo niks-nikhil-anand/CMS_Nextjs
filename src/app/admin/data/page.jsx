@@ -24,7 +24,7 @@ const DonorPage = () => {
   
   // Search and Filter States
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all');
   
   // Sorting States
   const [sortField, setSortField] = useState('createdAt');
@@ -38,6 +38,56 @@ const DonorPage = () => {
   const [deletingDonorId, setDeletingDonorId] = useState(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [donorToDelete, setDonorToDelete] = useState(null);
+
+  // Helper function to check if date falls within a specific period
+  const isDateInPeriod = (date, period) => {
+    const now = new Date();
+    const targetDate = new Date(date);
+    
+    // Set time to start of day for accurate comparison
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const thisWeekStart = new Date(today);
+    thisWeekStart.setDate(today.getDate() - today.getDay());
+    
+    const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    
+    const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+    
+    const targetDateOnly = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+    
+    switch (period) {
+      case 'today':
+        return targetDateOnly.getTime() === today.getTime();
+      case 'yesterday':
+        return targetDateOnly.getTime() === yesterday.getTime();
+      case 'thisWeek':
+        return targetDateOnly >= thisWeekStart && targetDateOnly <= today;
+      case 'lastWeek':
+        const lastWeekStart = new Date(thisWeekStart);
+        lastWeekStart.setDate(thisWeekStart.getDate() - 7);
+        const lastWeekEnd = new Date(thisWeekStart);
+        lastWeekEnd.setDate(thisWeekStart.getDate() - 1);
+        return targetDateOnly >= lastWeekStart && targetDateOnly <= lastWeekEnd;
+      case 'thisMonth':
+        return targetDateOnly >= thisMonthStart && targetDateOnly <= today;
+      case 'lastMonth':
+        return targetDateOnly >= lastMonthStart && targetDateOnly <= lastMonthEnd;
+      case 'last7Days':
+        const sevenDaysAgo = new Date(today);
+        sevenDaysAgo.setDate(today.getDate() - 7);
+        return targetDateOnly >= sevenDaysAgo && targetDateOnly <= today;
+      case 'last30Days':
+        const thirtyDaysAgo = new Date(today);
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+        return targetDateOnly >= thirtyDaysAgo && targetDateOnly <= today;
+      default:
+        return true;
+    }
+  };
 
   // Fetch donors from API
   const fetchDonors = async () => {
@@ -64,7 +114,7 @@ const DonorPage = () => {
   const handleDeleteDonor = async (donorId) => {
     try {
       setDeletingDonorId(donorId);
-      const response = await fetch(`/api/donorData/${donorId}`, {
+      const response = await fetch(`/api/data/${donorId}`, {
         method: 'DELETE',
       });
       if (!response.ok) {
@@ -82,7 +132,7 @@ const DonorPage = () => {
 
   // View donor
   const handleViewDonor = (donorId) => {
-    window.location.href = `/admin/donorData/${donorId}`;
+    window.location.href = `/admin/data/${donorId}`;
   };
 
   // Sort donors
@@ -122,16 +172,10 @@ const DonorPage = () => {
       );
     }
 
-    // Apply status filter (based on recent activity - created in last 30 days = active)
-    if (statusFilter !== 'all') {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
+    // Apply date filter
+    if (dateFilter !== 'all') {
       filtered = filtered.filter(donor => {
-        const isRecentlyActive = new Date(donor.createdAt) > thirtyDaysAgo;
-        if (statusFilter === 'active') return isRecentlyActive;
-        if (statusFilter === 'inactive') return !isRecentlyActive;
-        return true;
+        return isDateInPeriod(donor.createdAt, dateFilter);
       });
     }
 
@@ -140,7 +184,7 @@ const DonorPage = () => {
 
     setFilteredDonors(filtered);
     setCurrentPage(1); // Reset to first page when filters change
-  }, [donors, searchTerm, statusFilter, sortField, sortDirection]);
+  }, [donors, searchTerm, dateFilter, sortField, sortDirection]);
 
   // Pagination logic
   const indexOfLastDonor = currentPage * donorsPerPage;
@@ -164,15 +208,10 @@ const DonorPage = () => {
     return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
   };
 
-  // Get status badge classes (based on recent activity)
-  const getStatusBadgeClasses = (createdAt) => {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const isRecentlyActive = new Date(createdAt) > thirtyDaysAgo;
-    
-    return isRecentlyActive
-      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-      : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+  // Get count for each date filter
+  const getDateFilterCount = (period) => {
+    if (period === 'all') return donors.length;
+    return donors.filter(donor => isDateInPeriod(donor.createdAt, period)).length;
   };
 
   // Format date
@@ -232,11 +271,7 @@ const DonorPage = () => {
               <span>Total Donors: {donors.length}</span>
             </div>
             <div className="text-sm text-blue-600 dark:text-blue-400 bg-white dark:bg-gray-800 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700">
-              Active: {donors.filter(d => {
-                const thirtyDaysAgo = new Date();
-                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-                return new Date(d.createdAt) > thirtyDaysAgo;
-              }).length}
+              Today: {getDateFilterCount('today')}
             </div>
           </div>
         </div>
@@ -269,15 +304,21 @@ const DonorPage = () => {
               </div>
             </div>
             
-            {/* Status Filter */}
+            {/* Date Filter */}
             <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
               className="w-full lg:w-48 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="all">All Status</option>
-              <option value="active">Active (Recent)</option>
-              <option value="inactive">Inactive (Older)</option>
+              <option value="all">All Time ({getDateFilterCount('all')})</option>
+              <option value="today">Today ({getDateFilterCount('today')})</option>
+              <option value="yesterday">Yesterday ({getDateFilterCount('yesterday')})</option>
+              <option value="last7Days">Last 7 Days ({getDateFilterCount('last7Days')})</option>
+              <option value="thisWeek">This Week ({getDateFilterCount('thisWeek')})</option>
+              <option value="lastWeek">Last Week ({getDateFilterCount('lastWeek')})</option>
+              <option value="thisMonth">This Month ({getDateFilterCount('thisMonth')})</option>
+              <option value="lastMonth">Last Month ({getDateFilterCount('lastMonth')})</option>
+              <option value="last30Days">Last 30 Days ({getDateFilterCount('last30Days')})</option>
             </select>
           </div>
         </div>
