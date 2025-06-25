@@ -45,68 +45,42 @@ const DonorDetailsPage = () => {
 
   // Delete confirmation
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
-  // Mock data for demonstration
-  const mockDonor = {
-    _id: "685c47d798975cd972b461b5",
-    fullName: "John Doe",
-    email: "john.doe@example.com",
-    phone: "+91 9876543210",
-    createdAt: "2024-01-15T10:30:00Z",
-    updatedAt: "2024-01-20T14:45:00Z",
-    additionalFields: {
-      address: "123 Main Street, Mumbai, Maharashtra 400001",
-      donation_amount: 5000,
-      donation_date: "2024-01-15",
-      payment_method: "UPI",
-      notes:
-        "Regular donor, prefers digital payments. Very supportive of our cause.",
-    },
-  };
+  
 
   // Fetch donor details
+ // Fetch donor details
   const fetchDonor = async () => {
     if (!donorId) return;
 
     try {
       setLoading(true);
+      const response = await fetch(`/api/data/${donorId}`);
 
-      // Simulate API call - replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!response.ok) {
+        throw new Error('Failed to fetch donor details');
+      }
 
-      // For demo purposes, using mock data
-      const donorData = mockDonor;
+      const data = await response.json();
+      console.log(data);
+
+      const donorData = data.data;
       setDonor(donorData);
-
+      
       // Map the form data correctly based on the API response structure
       setFormData({
-        fullName: donorData.fullName || "",
-        email: donorData.email || "",
-        phone: donorData.phone || "",
-        address:
-          donorData.additionalFields?.address ||
-          donorData.allFields?.address ||
-          "",
-        donation_amount: (
-          donorData.additionalFields?.donation_amount ||
-          donorData.allFields?.donation_amount ||
-          ""
-        ).toString(),
-        donation_date:
-          donorData.additionalFields?.donation_date ||
-          donorData.allFields?.donation_date ||
-          "",
-        payment_method:
-          donorData.additionalFields?.payment_method ||
-          donorData.allFields?.payment_method ||
-          "",
-        notes:
-          donorData.additionalFields?.notes || donorData.allFields?.notes || "",
+        fullName: donorData.fullName || '',
+        email: donorData.email || '',
+        phone: donorData.phone || '',
+        address: donorData.additionalFields?.address || donorData.allFields?.address || '',
+        donation_amount: (donorData.additionalFields?.donation_amount || donorData.allFields?.donation_amount || '').toString(),
+        donation_date: donorData.additionalFields?.donation_date || donorData.allFields?.donation_date || '',
+        payment_method: donorData.additionalFields?.payment_method || donorData.allFields?.payment_method || '',
+        notes: donorData.additionalFields?.notes || donorData.allFields?.notes || ''
       });
-      setError("");
+      setError('');
     } catch (err) {
-      setError("Failed to fetch donor details");
-      console.error("Error fetching donor:", err);
+      setError('Failed to fetch donor details');
+      console.error('Error fetching donor:', err);
     } finally {
       setLoading(false);
     }
@@ -231,13 +205,14 @@ const DonorDetailsPage = () => {
 
   useEffect(() => {
     // Extract donorId from URL - for demo purposes, we'll use a mock ID
-    const id = "685c47d798975cd972b461b5";
+    const urlPath = window.location.pathname;
+    const id = urlPath.split("/")[3] || "685c47d798975cd972b461b5";
     setDonorId(id);
   }, []);
 
   useEffect(() => {
     if (donorId) {
-      fetchDonor();
+     fetchDonor()
     }
   }, [donorId]);
 
@@ -506,17 +481,7 @@ const DonorDetailsPage = () => {
               </div>
 
               {/* Status */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Status
-                </label>
-                <div className="flex items-center space-x-2 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
-                  <CheckCircle className="h-4 w-4 text-green-500 dark:text-green-400" />
-                  <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                    Active
-                  </span>
-                </div>
-              </div>
+             
             </div>
 
             {/* Address */}
