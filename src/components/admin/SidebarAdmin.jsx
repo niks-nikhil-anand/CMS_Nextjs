@@ -66,7 +66,7 @@ const SidebarAdmin = ({ isOpen = true }) => {
     },
     {
       name: "Add Data",
-      path: "/admin/donorData/addDonorData",
+      path: "/admin/distributeData",
       icon: Database,
     },
     {
