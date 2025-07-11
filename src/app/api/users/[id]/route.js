@@ -2,13 +2,12 @@ import connectDB from "@/lib/dbConnect";
 import userModels from "@/models/userModels";
 import { NextResponse } from "next/server";
 
-
 // GET user by slug (assuming slug is user ID or email/username)
 export const GET = async (req, { params }) => {
   try {
     await connectDB();
     const { id } = await params;
-    console.log(id)
+    console.log(id);
 
     const user = await userModels.findOne({ _id: id }).select("-password");
     if (!user) {
@@ -30,10 +29,13 @@ export const GET = async (req, { params }) => {
 // DELETE user by slug (user ID)
 export const DELETE = async (req, { params }) => {
   try {
+    console.log("Database connected ");
     await connectDB();
-    const { slug } = await params;
+    console.log("Database connected ");
+    const { id } = await params;
+    console.log(id)
 
-    const deletedUser = await userModels.findByIdAndDelete(slug);
+    const deletedUser = await userModels.findByIdAndDelete(id);
     if (!deletedUser) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
