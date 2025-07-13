@@ -49,6 +49,24 @@ const userSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+    callAttempted: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Data",
+      },
+    ],
+    scheduledFollowUp: [
+      {
+        dataId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Data",
+        },
+        followUpDate: {
+          type: Date,
+          required: true,
+        },
+      },
+    ],
   },
   {
     timestamps: true,
