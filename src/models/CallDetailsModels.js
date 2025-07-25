@@ -40,6 +40,10 @@ const CallDetailsSchema = new mongoose.Schema(
     doNotDisturb: Boolean,
     valuableCustomer: Boolean,
     appointmentScheduled: Boolean,
+    callTime: {
+      type: String,
+      required: true,
+    },
   },
   {
     timestamps: true,
